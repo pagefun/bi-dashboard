@@ -275,6 +275,20 @@ function setQuick(q){
   renderAll();
 }
 
+/* ── today/yesterday agg ── */
+function aggDate(dateStr){
+  const rows=allData.filter(d=>d.row[C.date]===dateStr&&d.row[C.type]==='汇总');
+  return agg(rows);
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function yesterdayStr(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
+function cmpArrow(t,y){
+  if(!y) return '';
+  const diff=t-y, pct=((diff/y)*100).toFixed(1);
+  const up=diff>=0;
+  return `<span style="font-size:10px;color:${up?'#2afac3':'#ff6b6b'};margin-left:4px">${up?'▲':'▼'}${Math.abs(pct)}%</span>`;
+}
+
 /* ── agg ── */
 function agg(rows){
   return {
@@ -344,6 +358,10 @@ function renderOverview(summary,detail){
   });
   const maxCost=Math.max(...mStats.map(m=>m.cost),1);
 
+  const td=aggDate(todayStr()), yd=aggDate(yesterdayStr());
+  const hasTd=td.cost>0||td.payment>0;
+  const hasYd=yd.cost>0||yd.payment>0;
+
   document.getElementById('mainArea').innerHTML=`
 <div id="view-overview" class="view active">
   <div class="kpi-row">
@@ -353,6 +371,25 @@ function renderOverview(summary,detail){
     <div class="kpi" style="--ac:#c97bff"><div class="kpi-label">充值金额</div><div class="kpi-value">¥${fk(totalRecharge)}</div><div class="kpi-sub">VIP+金币</div></div>
     <div class="kpi" style="--ac:#f5a623"><div class="kpi-label">新增渠道数</div><div class="kpi-value">${f0(newCh)}</div><div class="kpi-sub">本期新接入</div></div>
     <div class="kpi" style="--ac:#2afac3"><div class="kpi-label">安装（扣量）</div><div class="kpi-value">${fk(t.instAdj)}</div><div class="kpi-sub">有效安装</div></div>
+  </div>
+
+  <!-- 今日 vs 昨日 -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title" style="margin-bottom:10px">今日 vs 昨日对比 <span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:6px">${todayStr()}${!hasTd?' · 今日暂无数据':''}</span></div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+      ${[
+        {label:'消耗',td:td.cost,yd:yd.cost,ac:'#4f8fff',fmt:v=>'¥'+fk(v)},
+        {label:'打款',td:td.payment,yd:yd.payment,ac:'#2afac3',fmt:v=>'¥'+fk(v)},
+        {label:'充值',td:td.vipAdj+td.coin,yd:yd.vipAdj+yd.coin,ac:'#c97bff',fmt:v=>'¥'+fk(v)},
+        {label:'新增（扣量）',td:td.newAdj,yd:yd.newAdj,ac:'#f5a623',fmt:v=>fk(v)},
+        {label:'安装（扣量）',td:td.instAdj,yd:yd.instAdj,ac:'#2afac3',fmt:v=>fk(v)},
+      ].map(({label,td:tv,yd:yv,ac,fmt})=>`
+        <div style="background:var(--bg3);border-radius:var(--r2);padding:10px 12px;border-top:2px solid ${ac}">
+          <div style="font-size:10px;color:var(--text2);margin-bottom:4px">${label}</div>
+          <div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace">${fmt(tv)}${cmpArrow(tv,yv)}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">昨日 ${fmt(yv)}</div>
+        </div>`).join('')}
+    </div>
   </div>
 
   <div class="grid-2">
