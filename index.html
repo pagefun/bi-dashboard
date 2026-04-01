@@ -143,9 +143,11 @@ tr:hover td{background:var(--bg3);}
   <span class="filter-sep">→</span>
   <input type="date" class="date-input" id="dateEnd" onchange="onDateChange()">
   <div class="quick-btns">
-    <button class="qbtn" onclick="setQuick('7')">近7天</button>
-    <button class="qbtn" onclick="setQuick('14')">近14天</button>
-    <button class="qbtn" onclick="setQuick('30')">近30天</button>
+    <button class="qbtn" onclick="setQuick('day')">日</button>
+    <button class="qbtn" onclick="setQuick('week')">周</button>
+    <button class="qbtn" onclick="setQuick('month')">月</button>
+    <button class="qbtn" onclick="setQuick('quarter')">季</button>
+    <button class="qbtn" onclick="setQuick('year')">年</button>
     <button class="qbtn active" id="qAll" onclick="setQuick('all')">全部</button>
   </div>
   <span class="filter-result" id="filterResult">—</span>
@@ -245,16 +247,31 @@ function onDateChange(){
 function setQuick(q){
   document.querySelectorAll('.qbtn').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
+  const today=new Date();
+  const fmt=d=>d.toISOString().slice(0,10);
+  let s,e;
   if(q==='all'){
-    document.getElementById('dateStart').value=allDates[0]||'';
-    document.getElementById('dateEnd').value=allDates[allDates.length-1]||'';
-  } else {
-    const end=allDates[allDates.length-1]||new Date().toISOString().slice(0,10);
-    const endD=new Date(end);
-    const startD=new Date(endD); startD.setDate(endD.getDate()-parseInt(q)+1);
-    document.getElementById('dateStart').value=startD.toISOString().slice(0,10);
-    document.getElementById('dateEnd').value=end;
+    s=allDates[0]||''; e=allDates[allDates.length-1]||'';
+  } else if(q==='day'){
+    s=e=fmt(today);
+  } else if(q==='week'){
+    const d=new Date(today); d.setDate(today.getDate()-today.getDay()+1); // Mon
+    s=fmt(d);
+    const d2=new Date(d); d2.setDate(d.getDate()+6);
+    e=fmt(d2);
+  } else if(q==='month'){
+    s=fmt(new Date(today.getFullYear(),today.getMonth(),1));
+    e=fmt(new Date(today.getFullYear(),today.getMonth()+1,0));
+  } else if(q==='quarter'){
+    const qStart=Math.floor(today.getMonth()/3)*3;
+    s=fmt(new Date(today.getFullYear(),qStart,1));
+    e=fmt(new Date(today.getFullYear(),qStart+3,0));
+  } else if(q==='year'){
+    s=fmt(new Date(today.getFullYear(),0,1));
+    e=fmt(new Date(today.getFullYear(),11,31));
   }
+  document.getElementById('dateStart').value=s;
+  document.getElementById('dateEnd').value=e;
   renderAll();
 }
 
