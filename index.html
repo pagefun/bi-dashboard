@@ -278,7 +278,7 @@ function setQuick(q){
 /* ── compare helpers ── */
 const fmt0=d=>d.toISOString().slice(0,10);
 function aggRange(s,e){
-  const rows=allData.filter(d=>d.row[C.date]>=s&&d.row[C.date]<=e&&d.row[C.type]==='汇总');
+  const rows=allData.filter(d=>d.row[C.date]>=s&&d.row[C.date]<=e&&d.row[C.type]==='新增渠道明细');
   return agg(rows);
 }
 function aggDate(dateStr){ return aggRange(dateStr,dateStr); }
@@ -362,7 +362,6 @@ function renderAll(){
 /* ══ OVERVIEW ══ */
 function renderOverview(summary,detail){
   const t=agg(detail);
-  const sa=agg(summary);
   const totalRecharge=t.vipAdj+t.coin;
 
   // channel quality
@@ -380,7 +379,7 @@ function renderOverview(summary,detail){
 
   // member stats
   const mStats=MEMBERS.map(m=>{
-    const rows=getFiltered(m).filter(d=>d.row[C.type]==='汇总');
+    const rows=getFiltered(m).filter(d=>d.row[C.type]==='新增渠道明细');
     return {name:m,...agg(rows)};
   });
   const maxCost=Math.max(...mStats.map(m=>m.cost),1);
@@ -388,9 +387,9 @@ function renderOverview(summary,detail){
   document.getElementById('mainArea').innerHTML=`
 <div id="view-overview" class="view active">
   <div class="kpi-row">
-    <div class="kpi" style="--ac:#4f8fff"><div class="kpi-label">总消耗 CNY</div><div class="kpi-value">¥${fk(sa.cost)}</div><div class="kpi-sub">筛选区间合计</div></div>
-    <div class="kpi" style="--ac:#2afac3"><div class="kpi-label">总打款 CNY</div><div class="kpi-value">¥${fk(sa.payment)}</div><div class="kpi-sub">筛选区间合计</div></div>
-    <div class="kpi" style="--ac:${sa.pl>=0?'#2afac3':'#ff6b6b'}"><div class="kpi-label">总盈亏 CNY</div><div class="kpi-value ${sa.pl>=0?'pos':'neg'}">${sa.pl>=0?'+':''}¥${fk(sa.pl)}</div><div class="kpi-sub">${f0(sa.pl)} 元</div></div>
+    <div class="kpi" style="--ac:#4f8fff"><div class="kpi-label">总消耗 CNY</div><div class="kpi-value">¥${fk(t.cost)}</div><div class="kpi-sub">筛选区间合计</div></div>
+    <div class="kpi" style="--ac:#2afac3"><div class="kpi-label">总打款 CNY</div><div class="kpi-value">¥${fk(t.payment)}</div><div class="kpi-sub">筛选区间合计</div></div>
+    <div class="kpi" style="--ac:${t.pl>=0?'#2afac3':'#ff6b6b'}"><div class="kpi-label">总盈亏 CNY</div><div class="kpi-value ${t.pl>=0?'pos':'neg'}">${t.pl>=0?'+':''}¥${fk(t.pl)}</div><div class="kpi-sub">${f0(t.pl)} 元</div></div>
     <div class="kpi" style="--ac:#c97bff"><div class="kpi-label">充值金额</div><div class="kpi-value">¥${fk(totalRecharge)}</div><div class="kpi-sub">VIP+金币</div></div>
     <div class="kpi" style="--ac:#f5a623"><div class="kpi-label">新增渠道数</div><div class="kpi-value">${f0(newCh)}</div><div class="kpi-sub">本期新接入</div></div>
     <div class="kpi" style="--ac:#f5a623"><div class="kpi-label">新增（扣量前）</div><div class="kpi-value">${fk(t.newU)}</div><div class="kpi-sub">原始值</div></div>
@@ -415,7 +414,7 @@ function renderOverview(summary,detail){
       <div class="card-title">人员消耗占比</div>
       <div style="height:200px" id="pieChart"></div>
       <div id="pie-legend" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:10px;color:var(--text2)">
-        ${MEMBERS.map(m=>`<span style="display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:2px;background:${P_COLORS[m]}"></span>${m} ${pctStr(mStats.find(x=>x.name===m)?.cost||0,sa.cost)}</span>`).join('')}
+        ${MEMBERS.map(m=>`<span style="display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:2px;background:${P_COLORS[m]}"></span>${m} ${pctStr(mStats.find(x=>x.name===m)?.cost||0,t.cost)}</span>`).join('')}
       </div>
     </div>
     <div class="card">
@@ -449,11 +448,11 @@ function renderOverview(summary,detail){
           </tr>`).join('')}
           <tr style="border-top:1px solid var(--border2);font-weight:700">
             <td>合计</td>
-            <td class="r mono">¥${fk(sa.cost)}</td>
-            <td class="r mono">¥${fk(sa.payment)}</td>
-            <td class="r mono ${sa.pl>=0?'pos':'neg'}">${sa.pl>=0?'+':''}¥${fk(sa.pl)}</td>
-            <td class="r mono">${fk(sa.newU)}</td>
-            <td class="r mono">${fk(sa.newAdj)}</td>
+            <td class="r mono">¥${fk(t.cost)}</td>
+            <td class="r mono">¥${fk(t.payment)}</td>
+            <td class="r mono ${t.pl>=0?'pos':'neg'}">${t.pl>=0?'+':''}¥${fk(t.pl)}</td>
+            <td class="r mono">${fk(t.newU)}</td>
+            <td class="r mono">${fk(t.newAdj)}</td>
             <td class="r mono">${fk(t.instAdj)}</td>
             <td class="r mono">${fk(t.recharge)}</td>
             <td class="r mono">¥${fk(totalRecharge)}</td>
@@ -522,7 +521,7 @@ function renderCmpBody(){
 /* ══ PERSON ══ */
 function renderPerson(){
   const mStats=MEMBERS.map(m=>{
-    const rows=getFiltered(m).filter(d=>d.row[C.type]==='汇总');
+    const rows=getFiltered(m).filter(d=>d.row[C.type]==='新增渠道明细');
     return {name:m,...agg(rows)};
   });
   const maxCost=Math.max(...mStats.map(m=>m.cost),1);
@@ -639,7 +638,7 @@ function drawTrendChart(){
       const dt=d.row[C.date]; if(!dt) return false;
       if(s&&dt<s) return false;
       if(e&&dt>e) return false;
-      return d.row[C.type]==='汇总';
+      return d.row[C.type]==='新增渠道明细';
     }).map(d=>d.row[C.date])
   )].sort();
 
@@ -650,7 +649,7 @@ function drawTrendChart(){
       const dt=d.row[C.date]; if(!dt) return false;
       if(s&&dt<s) return false;
       if(e&&dt>e) return false;
-      return d.sheet===m&&d.row[C.type]==='汇总';
+      return d.sheet===m&&d.row[C.type]==='新增渠道明细';
     }).forEach(d=>{
       const dt=d.row[C.date];
       if(byDate[dt]!==undefined) byDate[dt]+=N(d.row[C[trendMetric]||C.cost]);
