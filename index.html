@@ -183,8 +183,8 @@ const MEMBERS   = ['于潼','陈勃','周天策'];
 const P_COLORS  = { '于潼':'#4f8fff','陈勃':'#2afac3','周天策':'#ff6b6b' };
 const C = {
   date:1, person:8, code:6, app:4, mode:11,
-  cost:19, newU:20, newAdj:21, vip:24, coin:25,
-  recovery:31, pl:32, payment:39
+  cost:39, newU:20, newAdj:21, vip:24, coin:25,
+  recovery:31, pl:32
 };
 
 let allData=[], currentView='overview', trendMetric='cost', activePerson=0;
@@ -193,12 +193,12 @@ MEMBERS.forEach(m=>trendVisible[m]=true);
 
 function normalizeDate(s){
   if(!s) return s;
-  const m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  const m=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
   if(!m) return s;
   return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
 }
 
-const N = v=>parseFloat(v)||0;
+const N = v=>parseFloat(String(v).replace(/,/g,''))||0;
 const mono = v=>`<span class="mono">${v}</span>`;
 function fk(v){
   const a=Math.abs(v);
@@ -325,7 +325,6 @@ let activeCmpTab='day';
 function agg(rows){
   return {
     cost:    rows.reduce((s,d)=>s+N(d.row[C.cost]),0),
-    payment: rows.reduce((s,d)=>s+N(d.row[C.payment]),0),
     pl:      rows.reduce((s,d)=>s+N(d.row[C.pl]),0),
     newU:    rows.reduce((s,d)=>s+N(d.row[C.newU]),0),
     newAdj:  rows.reduce((s,d)=>s+N(d.row[C.newAdj]),0),
@@ -368,7 +367,6 @@ function renderOverview(fd){
 <div id="view-overview" class="view active">
   <div class="kpi-row">
     <div class="kpi" style="--ac:#4f8fff"><div class="kpi-label">总消耗 CNY</div><div class="kpi-value">¥${fk(t.cost)}</div><div class="kpi-sub">筛选区间合计</div></div>
-    <div class="kpi" style="--ac:#2afac3"><div class="kpi-label">总打款 CNY</div><div class="kpi-value">¥${fk(t.payment)}</div><div class="kpi-sub">筛选区间合计</div></div>
     <div class="kpi" style="--ac:${t.pl>=0?'#2afac3':'#ff6b6b'}"><div class="kpi-label">总盈亏 CNY</div><div class="kpi-value ${t.pl>=0?'pos':'neg'}">${t.pl>=0?'+':''}¥${fk(t.pl)}</div><div class="kpi-sub">${f0(t.pl)} 元</div></div>
     <div class="kpi" style="--ac:#c97bff"><div class="kpi-label">充值金额</div><div class="kpi-value">¥${fk(totalRecharge)}</div><div class="kpi-sub">VIP+金币</div></div>
     <div class="kpi" style="--ac:#f5a623"><div class="kpi-label">新增（扣量前）</div><div class="kpi-value">${fk(t.newU)}</div><div class="kpi-sub">原始值</div></div>
@@ -407,7 +405,7 @@ function renderOverview(fd){
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th>投放人</th><th class="r">消耗 CNY</th><th class="r">打款 CNY</th><th class="r">盈亏 CNY</th>
+          <th>投放人</th><th class="r">消耗 CNY</th><th class="r">盈亏 CNY</th>
           <th class="r">新增（扣量前）</th><th class="r">新增（扣量后）</th><th class="r">VIP充值</th><th class="r">金币充值</th><th class="r">充值合计</th>
         </tr></thead>
         <tbody>
@@ -416,7 +414,6 @@ function renderOverview(fd){
               <span style="width:6px;height:6px;border-radius:50%;background:${P_COLORS[m.name]};flex-shrink:0"></span>${m.name}
             </span></td>
             <td class="r mono">¥${fk(m.cost)}</td>
-            <td class="r mono">¥${fk(m.payment)}</td>
             <td class="r mono ${m.pl>=0?'pos':'neg'}">${m.pl>=0?'+':''}¥${fk(m.pl)}</td>
             <td class="r mono">${fk(m.newU)}</td>
             <td class="r mono">${fk(m.newAdj)}</td>
@@ -427,7 +424,6 @@ function renderOverview(fd){
           <tr style="border-top:1px solid var(--border2);font-weight:700">
             <td>合计</td>
             <td class="r mono">¥${fk(t.cost)}</td>
-            <td class="r mono">¥${fk(t.payment)}</td>
             <td class="r mono ${t.pl>=0?'pos':'neg'}">${t.pl>=0?'+':''}¥${fk(t.pl)}</td>
             <td class="r mono">${fk(t.newU)}</td>
             <td class="r mono">${fk(t.newAdj)}</td>
@@ -465,7 +461,6 @@ function renderCmpBody(){
   const p=cmpPeriods()[activeCmpTab];
   const METRICS=[
     {label:'消耗',ac:'#4f8fff',cur:p.cur.cost,prev:p.prev.cost,fmt:v=>'¥'+fk(v)},
-    {label:'打款',ac:'#2afac3',cur:p.cur.payment,prev:p.prev.payment,fmt:v=>'¥'+fk(v)},
     {label:'充值',ac:'#c97bff',cur:p.cur.vip+p.cur.coin,prev:p.prev.vip+p.prev.coin,fmt:v=>'¥'+fk(v)},
     {label:'盈亏',ac:'#ff6b6b',cur:p.cur.pl,prev:p.prev.pl,fmt:v=>(v>=0?'+':'')+'¥'+fk(v)},
     {label:'新增（扣量前）',ac:'#f5a623',cur:p.cur.newU,prev:p.prev.newU,fmt:v=>fk(v)},
@@ -533,7 +528,6 @@ function renderPerson(){
     </div>
     <div class="pkpi-row">
       <div class="kpi" style="--ac:${color}"><div class="kpi-label">消耗金额</div><div class="kpi-value" style="font-size:17px">¥${fk(pm.cost)}</div><div class="kpi-sub">期间合计</div></div>
-      <div class="kpi" style="--ac:#2afac3"><div class="kpi-label">打款金额</div><div class="kpi-value" style="font-size:17px">¥${fk(pm.payment)}</div><div class="kpi-sub">期间合计</div></div>
       <div class="kpi" style="--ac:${pm.pl>=0?'#2afac3':'#ff6b6b'}"><div class="kpi-label">盈亏</div><div class="kpi-value ${pm.pl>=0?'pos':'neg'}" style="font-size:17px">${pm.pl>=0?'+':''}¥${fk(pm.pl)}</div><div class="kpi-sub">期间合计</div></div>
       <div class="kpi" style="--ac:#2afac3"><div class="kpi-label">新增（扣量前）</div><div class="kpi-value" style="font-size:17px">${fk(pm.newU)}</div><div class="kpi-sub">原始值</div></div>
       <div class="kpi" style="--ac:#4f8fff"><div class="kpi-label">新增（扣量后）</div><div class="kpi-value" style="font-size:17px">${fk(pm.newAdj)}</div><div class="kpi-sub">有效新增</div></div>
