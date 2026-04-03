@@ -184,7 +184,7 @@ const SHEET2_NAME= '拓展结果';
 const MEMBERS    = ['于潼','陈勃','周天策'];
 const P_COLORS   = { '于潼':'#4f8fff','陈勃':'#2afac3','周天策':'#ff6b6b' };
 const C = {
-  date:1, person:8, code:6, app:4, mode:11,
+  date:1, person:8, code:6, app:5, mode:11,
   cost:39, newU:20, newAdj:21, vip:24, coin:25,
   recovery:31, pl:32
 };
@@ -354,7 +354,7 @@ let activeCmpTab='day';
 function agg(rows){
   return {
     cost:    rows.reduce((s,d)=>s+N(d.row[C.cost]),0),
-    pl:      rows.reduce((s,d)=>s+N(d.row[C.pl]),0),
+    pl:      rows.filter(d=>(d.row[C.app]||'').trim()==='付费').reduce((s,d)=>s+N(d.row[C.pl]),0),
     newU:    rows.reduce((s,d)=>s+N(d.row[C.newU]),0),
     newAdj:  rows.reduce((s,d)=>s+N(d.row[C.newAdj]),0),
     vip:     rows.reduce((s,d)=>s+N(d.row[C.vip]),0),
